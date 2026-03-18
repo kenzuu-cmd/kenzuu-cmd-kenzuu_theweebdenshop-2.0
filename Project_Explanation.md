@@ -415,3 +415,25 @@ If something fails during demo:
 - Check server logs for Identity/validation errors
 - Check database rows and migration state
 - Trace one flow end-to-end: View -> Controller -> Service/EF -> View
+
+## 15. Cart Handling for Deleted Products
+
+Why this check is done:
+
+- A cart item can stay in session even after the real product is deleted from the database.
+- Without a check, users see a broken/ghost item and may try to buy something that no longer exists.
+
+Where this logic is in code:
+
+- `CartController.Index` checks whether each cart item id still exists in `Products` table.
+- `CartViewModel` stores missing product ids in `UnavailableProductIds`.
+- `Views/Cart/Index.cshtml` renders unavailable items with this message:
+  - **This product is no longer available in the store.**
+  - Quantity controls and subtotal are hidden/replaced for that row.
+  - Remove button stays available so users can clean the cart.
+
+What happens if this code is removed:
+
+- Cart page can show stale products with broken image/details after deletion.
+- Quantity and checkout behavior becomes confusing because session data is out of sync with the database.
+- Users can attempt checkout with non-existent products, which leads to inconsistent order flow.

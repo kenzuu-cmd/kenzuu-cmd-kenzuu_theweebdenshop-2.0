@@ -29,7 +29,10 @@
                     <div class="col-lg-8">
                         @foreach (var item in Model.CartItems)
                         {
-                            var cartImageSrc = ProductHtmlHelpers.ResolveImageUrl(item.Image);
+                            var isUnavailable = Model.UnavailableProductIds.Contains(item.Id);
+                            var cartImageSrc = isUnavailable
+                                ? "/images/placeholder.svg"
+                                : ProductHtmlHelpers.ResolveImageUrl(item.Image);
                             <div class="cart-item mb-3">
                                 <div class="row g-0 align-items-center">
                                     <div class="col-lg-2 col-md-3 col-3">
@@ -41,36 +44,62 @@
                                         </div>
                                     </div>
                                     <div class="col-lg-10 col-md-9 col-9">
-                                        <div class="p-3 p-md-4">
+                                        <div class="p-3 p-md-4 @(isUnavailable ? "bg-light" : string.Empty)">
                                             <div class="row g-3 align-items-center">
                                                 <div class="col-lg-4 col-md-12">
-                                                    <h5 class="mb-2 fw-bold text-truncate">@item.Name</h5>
-                                                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                                            @ProductHtmlHelpers.FormatPrice(item.Price) each
-                                                        </span>
-                                                        <small class="text-muted"><i class="fas fa-box me-1"></i>@item.Stock in stock</small>
-                                                    </div>
+                                                    <h5 class="mb-2 fw-bold text-truncate @(isUnavailable ? "text-muted" : string.Empty)">@item.Name</h5>
+                                                    @if (isUnavailable)
+                                                    {
+                                                        <div class="alert alert-warning py-2 px-3 mb-0" role="alert">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            This product is no longer available in the store.
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                                @ProductHtmlHelpers.FormatPrice(item.Price) each
+                                                            </span>
+                                                            <small class="text-muted"><i class="fas fa-box me-1"></i>@item.Stock in stock</small>
+                                                        </div>
+                                                    }
                                                 </div>
                                                 <div class="col-lg-3 col-md-5 col-12">
                                                     <label class="form-label small text-muted mb-1">Quantity</label>
-                                                    <div class="d-flex align-items-center gap-1">
-                                                        <form method="post" asp-controller="Cart" asp-action="UpdateQuantity">
-                                                            <input type="hidden" name="productId" value="@item.Id" />
-                                                            <input type="hidden" name="change" value="-1" />
-                                                            <button type="submit" class="btn btn-sm btn-outline-secondary qty-btn"><i class="fas fa-minus"></i></button>
-                                                        </form>
-                                                        <input type="text" class="form-control form-control-sm text-center fw-bold" value="@item.Quantity" readonly style="max-width: 48px;" />
-                                                        <form method="post" asp-controller="Cart" asp-action="UpdateQuantity">
-                                                            <input type="hidden" name="productId" value="@item.Id" />
-                                                            <input type="hidden" name="change" value="1" />
-                                                            <button type="submit" class="btn btn-sm btn-outline-secondary qty-btn"><i class="fas fa-plus"></i></button>
-                                                        </form>
-                                                    </div>
+                                                    @if (isUnavailable)
+                                                    {
+                                                        <div class="text-muted small">
+                                                            Quantity controls are disabled for unavailable products.
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="d-flex align-items-center gap-1">
+                                                            <form method="post" asp-controller="Cart" asp-action="UpdateQuantity">
+                                                                <input type="hidden" name="productId" value="@item.Id" />
+                                                                <input type="hidden" name="change" value="-1" />
+                                                                <button type="submit" class="btn btn-sm btn-outline-secondary qty-btn"><i class="fas fa-minus"></i></button>
+                                                            </form>
+                                                            <input type="text" class="form-control form-control-sm text-center fw-bold" value="@item.Quantity" readonly style="max-width: 48px;" />
+                                                            <form method="post" asp-controller="Cart" asp-action="UpdateQuantity">
+                                                                <input type="hidden" name="productId" value="@item.Id" />
+                                                                <input type="hidden" name="change" value="1" />
+                                                                <button type="submit" class="btn btn-sm btn-outline-secondary qty-btn"><i class="fas fa-plus"></i></button>
+                                                            </form>
+                                                        </div>
+                                                    }
                                                 </div>
                                                 <div class="col-lg-3 col-md-4 col-7">
                                                     <label class="form-label small text-muted mb-1">Subtotal</label>
-                                                    <h5 class="mb-0 text-primary fw-bold">@ProductHtmlHelpers.FormatPrice(item.Subtotal)</h5>
+                                                    @if (isUnavailable)
+                                                    {
+                                                        <h6 class="mb-0 text-muted">Unavailable</h6>
+                                                    }
+                                                    else
+                                                    {
+                                                        <h5 class="mb-0 text-primary fw-bold">@ProductHtmlHelpers.FormatPrice(item.Subtotal)</h5>
+                                                    }
                                                 </div>
                                                 <div class="col-lg-2 col-md-3 col-5 text-end">
                                                     <form method="post" asp-controller="Cart" asp-action="RemoveItem">
@@ -104,9 +133,22 @@
                                     <span class="h5 mb-0">Total</span>
                                     <strong class="h5 mb-0 text-primary">@ProductHtmlHelpers.FormatPrice(Model.Total)</strong>
                                 </div>
-                                <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary w-100 mb-2">
-                                    <i class="fas fa-lock me-2"></i>Proceed to Checkout
-                                </a>
+                                @if (Model.HasUnavailableItems)
+                                {
+                                    <div class="alert alert-warning py-2 px-3" role="alert">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Remove unavailable items before checkout.
+                                    </div>
+                                    <button type="button" class="btn btn-secondary w-100 mb-2" disabled>
+                                        <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                                    </button>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary w-100 mb-2">
+                                        <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                                    </a>
+                                }
                                 <form method="post" asp-controller="Cart" asp-action="ClearCart">
                                     <button type="submit" class="btn btn-outline-danger w-100 btn-sm"
                                             onclick="return confirm('Clear all items from your cart?');">
