@@ -368,7 +368,7 @@ Restore:
 - Reuse ProductHtmlHelpers.ResolveImageUrl for rendering
 - Keep ImageUploadService validation and path handling
 
-## 14. Helpful Debugging/Explaining Notes (For Teacher)
+## 14. Helpful Debugging/Explaining Notes
 
 When explaining a feature, use this order:
 
