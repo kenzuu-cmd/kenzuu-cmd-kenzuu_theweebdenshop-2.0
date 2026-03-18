@@ -1,4 +1,4 @@
-# Project Explanation (Beginner + Teacher Guide)
+# Project Explanation
 
 This document explains the project in clear, beginner-friendly language while still using correct ASP.NET Core MVC terms.
 
