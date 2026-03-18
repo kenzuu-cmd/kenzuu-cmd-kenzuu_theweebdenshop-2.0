@@ -1,289 +1,417 @@
 # Project Explanation (Beginner + Teacher Guide)
 
-This file explains the project in plain language and maps features to common school requirements.
+This document explains the project in clear, beginner-friendly language while still using correct ASP.NET Core MVC terms.
 
 ## 1. What This Project Is
 
-The Weeb Den Shop is a web app where users can:
+The Weeb Den Shop is an ASP.NET Core MVC web application where users can:
 
-- create an account,
-- log in,
+- register and log in,
 - browse manga,
-- add items to a cart,
-- checkout,
-- and (if they own a store) add/edit/delete their own manga listings.
+- add items to cart and checkout,
+- create a store and manage their own manga listings,
+- and (if admin) manage users and moderate listings.
 
-Admins can manage users and ban/unban store listings.
+Tech stack used in this project:
 
-## 2. School Requirement Mapping
+- ASP.NET Core MVC (Controllers + Razor Views)
+- ASP.NET Core Identity (authentication, password hashing, roles)
+- Entity Framework Core + SQL Server (data access)
+- Session + HttpContext (cart persistence)
+- Dependency Injection (services registered in Program.cs)
 
-### Requirement: Registration
+## 2. Quick File Map (Where to Find Code Fast)
 
-- Code location:
-  - `Controllers/AccountController.cs` (`Register` GET/POST)
-  - `Views/Account/Register.cshtml`
-  - `ViewModels/RegisterViewModel.cs`
-- How it works:
-  - User submits registration form.
-  - Server validates fields.
-  - `UserManager.CreateAsync(user, password)` creates user.
-  - User is assigned `Customer` role.
+- Controllers: /Controllers
+- Entity and form models: /Models
+- ViewModels used by views/forms: /ViewModels
+- Business logic services: /Services
+- EF Core DbContext and DB mapping: /Data/ApplicationDbContext.cs
+- Migrations: /Migrations
+- Razor UI: /Views
+- Static files and uploads: /wwwroot (especially /wwwroot/images)
+- App startup + DI + middleware + routing: /Program.cs
+- Settings: /appsettings.json and /appsettings.Development.json
 
-If removed/broken:
+## 3. MVC Roles in This Project (Model, View, Controller, ViewModel)
 
-- New users cannot create accounts.
-- Login only works for already existing users.
+### Model
 
-Teacher debug notes:
+Models define the data structure used by EF Core and the database.
 
-- Check `ModelState` errors in POST Register.
-- Check Identity password policy errors.
-- Check if `Customer` role exists (seeded in `Program.cs`).
+Examples:
 
-### Requirement: Login / Authentication
+- User, Product, Store, CartItem
+- Relationships configured in ApplicationDbContext:
+  - one User -> one Store
+  - one Store -> many Products
 
-- Code location:
-  - `Controllers/AccountController.cs` (`Login` GET/POST)
-  - `Views/Account/Login.cshtml`
-  - `Program.cs` cookie + Identity config
-- How it works:
-  - User submits email/password.
-  - `PasswordSignInAsync` checks credentials.
-  - If valid, auth cookie is created.
-  - `[Authorize]` protects cart/checkout/store routes.
+EF Core uses these models to map C# objects to database tables.
 
-If removed/broken:
+### View
 
-- Protected pages may become inaccessible or unprotected.
-- Cart/checkout/store access flow breaks.
+Views are Razor (.cshtml) files that render HTML.
 
-Teacher debug notes:
+- Strongly typed with @model
+- Use Tag Helpers like asp-for, asp-validation-for, asp-action, asp-route-\*
+- Show form validation messages and TempData results
 
-- Verify `app.UseAuthentication()` and `app.UseAuthorization()` exist.
-- Check login path config in `Program.cs`.
-- Check whether account is locked or email is unconfirmed.
+### Controller
 
-### Requirement: Password Hashing
+Controllers receive HTTP requests, coordinate logic, and return responses.
 
-- Code location:
-  - `Program.cs` Identity setup
-  - `Controllers/AccountController.cs`
-  - `Controllers/UsersController.cs` (password reset flow)
-- How it works:
-  - Password is never stored as plain text.
-  - Identity hashes password before saving.
+- Action methods return View(), RedirectToAction(), LocalRedirect(), etc.
+- They call services/DbContext/UserManager/SignInManager
+- They enforce security and validation rules before writing data
 
-If removed/broken:
+### ViewModel
 
-- Security requirement fails.
-- User auth becomes insecure or nonfunctional.
+ViewModels shape data specifically for a page/form.
 
-Teacher debug notes:
+Why this matters:
 
-- Confirm code uses `UserManager` methods (`CreateAsync`, `ResetPasswordAsync`).
-- Confirm there is no manual `Password` field in DB model.
+- Avoids overposting (users cannot submit hidden/unexpected entity fields)
+- Keeps sensitive/internal fields off forms
+- Keeps controllers cleaner and safer
 
-### Requirement: CRUD
+Examples:
 
-- Code location:
-  - Store listing CRUD: `Controllers/StoreController.cs`
-    - Create: `AddManga`
-    - Read: `Dashboard` / public `StoreViewController.Index`
-    - Update: `EditManga`
-    - Delete: `DeleteManga`
-  - User CRUD (admin): `Controllers/UsersController.cs`
-- How it works:
-  - Forms submit data to controller actions.
-  - Controller validates and updates database through EF Core.
-  - Views show updated data.
+- RegisterViewModel, LoginViewModel
+- StoreDashboardViewModel, CheckoutViewModel
+- UserCreateViewModel, UserEditViewModel
 
-If removed/broken:
+## 4. Validation: Data Annotations + Client/Server Checks
 
-- Cannot add/edit/delete listings or users.
-- Database data becomes stale because updates do not execute.
+This project uses Data Annotations such as:
 
-Teacher debug notes:
+- [Required]
+- [StringLength]
+- [EmailAddress]
+- [Compare]
+- [Range]
+- [Display]
+- [DataType]
 
-- Confirm HTTP verb attributes are correct (`[HttpPost]`).
-- Confirm anti-forgery token is present and validated.
-- Confirm `ApplicationDbContext` is registered and migration is applied.
+How validation flows:
 
-### Requirement: At Least Two Models
+1. User enters data in a Razor form.
+2. Client-side checks run (via Tag Helpers and validation scripts).
+3. Data is posted to a [HttpPost] action.
+4. Server-side ModelState validation runs again (critical security layer).
+5. If invalid, controller returns the same view with errors.
 
-- Included models:
-  - `User`, `Store`, `Product`, `CartItem` (and form models)
-- Relationship examples:
-  - one user -> one store,
-  - one store -> many products.
+Important: server-side validation is always the final authority because client-side can be bypassed.
 
-### Requirement: MVC Pattern
+## 5. Routing, Action Methods, and HTTP Attributes
 
-- Model: entities and validation rules (`Models/*`)
-- View: Razor pages (`Views/*`)
-- Controller: request/response logic (`Controllers/*`)
-- Service layer: reusable business logic (`Services/*`)
+Routing is configured in Program.cs with the default route pattern:
 
-## 3. How Main Features Work
+- {controller=Home}/{action=Index}/{id?}
 
-### A. Product Browsing and Search
+Action methods use attributes to separate read/write behavior:
 
-- `ProductsController.Index` calls `ProductService.Search(...)`.
-- Filters include search term, genre, and price range.
-- UI is rendered in `Views/Products/Index.cshtml` and `Views/Shared/_ProductCard.cshtml`.
+- [HttpGet] for showing pages/forms
+- [HttpPost] for submit operations
+- [ValidateAntiForgeryToken] to protect forms from CSRF
 
-If broken:
+Example pattern used throughout:
 
-- Product list may appear empty or filters do nothing.
+- GET action returns form view
+- POST action validates and processes
+- on success, redirect (PRG pattern)
 
-Debug checklist:
+## 6. Authentication and Authorization (Identity-Based)
 
-- Check `ProductService.Search` where conditions.
-- Check if products are `IsApproved` and not `IsBanned`.
-- Check migration/seed data exists.
+This project uses ASP.NET Core Identity with custom User entity type.
 
-### B. Cart and Checkout
+Configured in Program.cs:
 
-- Add to cart: `ProductsController.AddToCart` or `StoreViewController.AddToCart`.
-- Cart storage: `Services/CartService.cs` using session JSON.
-- Cart display: `Views/Cart/Index.cshtml`.
-- Checkout display + form validation: `Views/Checkout/Index.cshtml`.
+- AddIdentity<User, IdentityRole<int>>()
+- Password policy, lockout settings, unique email, confirmed email requirement
+- Cookie login/logout/access denied paths
+- app.UseAuthentication() and app.UseAuthorization()
 
-If broken:
+### Registration Flow
 
-- Items may not persist between requests.
-- Quantity update/remove may fail.
+Main code:
 
-Debug checklist:
+- AccountController.Register (GET/POST)
+- RegisterViewModel
 
-- Ensure session services are enabled in `Program.cs`.
-- Ensure `app.UseSession()` is in middleware pipeline.
-- Inspect session key `ShoppingCart`.
+How it works:
 
-### C. Store Management (Seller Features)
+1. POST receives RegisterViewModel.
+2. ModelState checks Data Annotations.
+3. UserManager.CreateAsync(user, password) creates user.
+4. Identity hashes the password internally and stores PasswordHash.
+5. User is assigned Customer role.
+6. Email confirmation token is generated and logged link is provided.
 
-- User creates one store (`CreateStore`).
-- User uploads manga cover image and listing data (`AddManga`).
-- User edits listing and optionally replaces image (`EditManga`).
+### Login Flow
 
-If broken:
+Main code:
 
-- Seller cannot manage listings.
-- Uploaded images may fail due to validation.
+- AccountController.Login (GET/POST)
 
-Debug checklist:
+How it works:
 
-- Check `ImageUploadService` extension, MIME type, and file size rules.
-- Check folder write permissions under `wwwroot/images/manga`.
-- Check ModelState validation errors on form submit.
+1. POST receives LoginViewModel.
+2. ModelState is validated.
+3. SignInManager.PasswordSignInAsync checks credentials and lockout rules.
+4. On success, Identity creates auth cookie and user becomes authenticated.
+5. [Authorize] attributes protect pages like cart/checkout/store.
 
-### D. Admin Features
+### Password Hashing (No Custom HashingService Here)
 
-- Admin dashboard: `AdminController.Dashboard`.
-- Listing moderation: `BanListing` / `UnbanListing`.
-- User CRUD: `UsersController`.
+There is no separate HashingService class in this codebase.
 
-If broken:
+Instead, hashing is correctly handled by ASP.NET Core Identity via UserManager methods:
 
-- Admin cannot manage users/listings.
+- CreateAsync
+- ResetPasswordAsync
 
-Debug checklist:
+This is recommended practice because Identity handles secure hashing algorithms, salting, and upgrade paths.
 
-- Check role assignment (`Admin`).
-- Check policy protection `[Authorize(Policy = "RequireAdminRole")]`.
-- Check seeded admin user and password configuration.
+## 7. HttpContext, TempData, and ViewData in Real Use
 
-## 4. Cart Image Bug Fix (Important)
+### HttpContext usage in this project
 
-### Original issue
+- CartService uses IHttpContextAccessor to access HttpContext.Session.
+- StoreViewController uses HttpContext.Request.Path + QueryString to build a return URL when redirecting unauthenticated users to login.
+- HomeController uses HttpContext.TraceIdentifier in Error action diagnostics.
 
-Cart and checkout pages forced image URLs into this format:
+### TempData usage
 
-- `/images/<filename>`
+TempData is used for one-request messages after redirects, for example:
 
-But uploaded store images are saved as:
+- Success/error messages after checkout
+- Newsletter/contact feedback
+- Add-to-cart/store management messages
+- Email confirmation outcomes
 
-- `images/manga/<filename>`
+### ViewBag usage
 
-So cart pages removed `manga/` and produced broken image links.
+ViewBag is not a primary pattern in this project; strongly typed ViewModels + TempData/ViewData are preferred.
 
-### What was changed
+## 8. Services and Dependency Injection (DI)
 
-- Added a shared helper: `ProductHtmlHelpers.ResolveImageUrl(string? imagePath)`.
-- Updated image rendering in cart, checkout, and product listing/detail views to use this helper.
-- Added image fallback: `onerror -> /images/placeholder.svg`.
+Registered in Program.cs:
 
-### Why this fix is correct
+- IProductService -> ProductService
+- ICartService -> CartService
+- INewsletterService -> NewsletterService
+- IImageUploadService -> ImageUploadService
 
-The helper normalizes all known path formats consistently:
+How DI works here:
 
-- `images/file.jpg`
-- `/images/file.jpg`
-- `images/manga/file.jpg`
-- plain file name
-- full `http/https` URL
+- Controllers request interfaces in constructors
+- ASP.NET Core injects concrete implementations automatically
+- This keeps controllers simpler and improves testability/maintainability
 
-So every page now builds image URLs the same way.
+Service examples:
 
-### If someone removes this helper
+- ProductService: EF Core queries, search/filter, featured products
+- CartService: session-backed cart JSON serialization
+- ImageUploadService: safe upload validation + storage + delete
 
-Expected symptoms:
+## 9. CRUD with EF Core (How Data Is Read/Written)
 
-- Cart or checkout images disappear for store-uploaded products.
-- Some pages work while others fail (inconsistent logic).
+### Store and Manga CRUD
 
-What to inspect:
+Main code:
 
-- All views that show images.
-- Any direct usage of `Path.GetFileName(image)`.
-- Whether path-subfolder information is lost.
+- StoreController
 
-## 5. What Happens If Key Code Is Removed
+Actions:
 
-### If `UseAuthentication` / `UseAuthorization` is removed
+- Create store: CreateStore
+- Create listing: AddManga
+- Read listings: Dashboard / StoreViewController.Index
+- Update listing: EditManga
+- Delete listing: DeleteManga
 
-- Login state may not be enforced.
-- `[Authorize]` no longer protects routes correctly.
+EF Core operations used:
 
-### If `AddIdentity` setup is removed
+- Add(), Remove(), SaveChangesAsync()
+- Queries with FirstOrDefaultAsync(), AnyAsync(), Include()
 
-- Registration/login fails.
-- Password hashing/authentication pipeline breaks.
+### Admin User CRUD
 
-### If `AddSession` or `UseSession` is removed
+Main code:
 
-- Cart no longer persists in session.
-- Cart can reset unexpectedly each request.
+- UsersController (protected by [Authorize(Policy = "RequireAdminRole")])
 
-### If `db.Database.Migrate()` is removed at startup
+Actions:
 
-- Fresh machines may fail on first run due to missing DB schema.
+- Index, Details, Create, Edit, Delete
+- Password reset done safely via GeneratePasswordResetTokenAsync + ResetPasswordAsync
 
-### If anti-forgery attributes are removed
+## 10. File Uploads and wwwroot Usage
 
-- Security requirement weakens.
-- Forms become vulnerable to CSRF.
+Main code:
 
-## 6. Teacher Demo Script (Quick)
+- ImageUploadService
 
-1. Run app and open Home.
-2. Register a new user.
-3. Confirm email via logged confirmation link.
-4. Login and add products to cart.
-5. Verify cart images load for both seeded and uploaded products.
-6. Create store and add manga with image upload.
-7. Edit manga and verify image replacement.
-8. Login as admin and ban/unban listing.
-9. Open Users page and perform CRUD action.
+Upload behavior:
 
-## 7. Practical Debugging Tips for Oral Defense
+- Validates extension and MIME type
+- Enforces max size (5 MB)
+- Saves file under wwwroot/images/{subfolder}
+- Returns relative path for DB storage (example: images/manga/file.jpg)
 
-- Always start from route -> controller action -> service -> view.
-- If UI is broken, inspect browser Network tab (404/500 errors).
-- If data is missing, verify database values and migration state.
-- If validation blocks submission, inspect `ModelState` errors.
-- If authorization fails, check user roles and policy attributes.
-- If image is broken, print/log stored path and compare with actual `wwwroot/images` file.
+Why wwwroot matters:
 
-## 8. Short Summary for Presentation
+- Only files under wwwroot are directly served as static assets
+- Broken path formatting causes missing images even if file exists
 
-This project is a complete MVC web app with Identity auth, hashed passwords, role-based access, EF Core data, and CRUD operations. It includes both customer and admin workflows, plus a fixed and centralized image path system so product images display consistently across the catalog, cart, and checkout pages.
+Related fix already implemented:
+
+- ProductHtmlHelpers.ResolveImageUrl normalizes image paths across views and supports fallback placeholder
+
+## 11. Migrations and Database Commands
+
+EF Core migration usage in this project:
+
+- db.Database.Migrate() runs at startup to apply pending migrations
+- Existing migration files are in /Migrations
+
+Useful commands:
+
+```powershell
+dotnet ef migrations add MigrationName
+dotnet ef database update
+```
+
+Package Manager Console equivalents:
+
+```powershell
+Add-Migration MigrationName
+Update-Database
+```
+
+## 12. Configuration Points
+
+Change these when setting up another machine/environment:
+
+- Connection string: appsettings.json -> ConnectionStrings:DefaultConnection
+- Seed admin credentials: SeedAdmin:Email and SeedAdmin:Password
+- Identity, session, cookies, routing, policies, DI registrations: Program.cs
+
+## 13. What Breaks If Key Code Is Removed (and How to Restore)
+
+### If authentication middleware is removed
+
+Removed:
+
+- app.UseAuthentication() and/or app.UseAuthorization()
+
+Breaks:
+
+- [Authorize] rules fail to work correctly
+- Login state is not applied reliably
+
+Restore:
+
+- Re-add middleware in correct order after UseRouting and before endpoint mapping
+
+### If Identity setup is removed
+
+Removed:
+
+- AddIdentity<User, IdentityRole<int>>()
+
+Breaks:
+
+- Registration/login/password reset flow
+- Role-based checks and cookies
+
+Restore:
+
+- Re-register Identity and EntityFramework stores in Program.cs
+
+### If session is removed
+
+Removed:
+
+- AddSession / UseSession / AddHttpContextAccessor
+
+Breaks:
+
+- CartService cannot persist cart in session
+- Cart empties unexpectedly or throws null/session errors
+
+Restore:
+
+- Re-enable session services and middleware in Program.cs
+
+### If Data Annotation validation is removed
+
+Breaks:
+
+- Invalid data can enter controllers/DB
+- User experience worsens due to missing form guidance
+
+Restore:
+
+- Re-add attributes on ViewModel/Model properties
+- Ensure ModelState checks remain in POST actions
+
+### If image helper or upload rules are removed
+
+Breaks:
+
+- Image links may fail (especially uploaded manga under images/manga)
+- Unsafe files may be accepted
+
+Restore:
+
+- Reuse ProductHtmlHelpers.ResolveImageUrl for rendering
+- Keep ImageUploadService validation and path handling
+
+## 14. Helpful Debugging/Explaining Notes (For Teacher)
+
+When explaining a feature, use this order:
+
+1. Route hits controller action
+2. Controller validates ModelState and auth
+3. Controller calls service or EF Core/UserManager
+4. Data is saved/read
+5. Controller returns View or Redirect
+6. View renders ViewModel + validation messages
+
+Quick checks per feature:
+
+- Registration/Login:
+  - verify Identity config in Program.cs
+  - verify UserManager/SignInManager calls in AccountController
+  - check lockout and email confirmation behavior
+- CRUD:
+  - verify [HttpPost] + [ValidateAntiForgeryToken]
+  - verify SaveChangesAsync is called
+  - verify the correct record is queried by id/owner
+- Validation:
+  - verify Data Annotation attributes on ViewModels
+  - verify asp-validation-for and validation summary in Razor
+  - verify server-side ModelState checks
+- Cart/session:
+  - verify AddSession + UseSession
+  - inspect session key ShoppingCart
+- Uploads/images:
+  - verify file exists under wwwroot/images/\*
+  - verify stored DB path and rendered URL normalization
+
+Critical pieces that should not be deleted:
+
+- Identity setup + authentication/authorization middleware
+- Session setup used by CartService
+- Anti-forgery attributes on POST actions
+- ModelState checks in POST actions
+- EF Core migration/apply flow
+- Image path normalization helper
+
+If something fails during demo:
+
+- Check browser network tab for 404/500
+- Check server logs for Identity/validation errors
+- Check database rows and migration state
+- Trace one flow end-to-end: View -> Controller -> Service/EF -> View
