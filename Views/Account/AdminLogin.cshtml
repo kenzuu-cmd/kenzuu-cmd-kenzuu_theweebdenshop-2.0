@@ -1,0 +1,82 @@
+@model TheWeebDenShop.ViewModels.AdminLoginViewModel
+@{
+    ViewData["Title"] = "Admin Login";
+}
+
+<main class="main-content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="border-top: 3px solid var(--color-accent) !important;">
+                    <div class="card-header text-center py-4 border-0" style="background: var(--color-primary);">
+                        <div class="mb-2">
+                            <i class="fas fa-shield-halved fa-2x" style="color: #fbbf24;"></i>
+                        </div>
+                        <h2 class="mb-0 fw-bold" style="color: #ffffff;">Admin Portal</h2>
+                        <p class="mb-0 mt-2 fw-medium" style="color: rgba(255, 255, 255, 0.9); font-size: 1rem;">Authorized personnel only</p>
+                    </div>
+                    <div class="card-body p-4" style="background: var(--color-warning-subtle);">
+                        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+                                <i class="fas fa-exclamation-triangle me-1"></i>@Model.ErrorMessage
+                                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <div class="alert alert-warning py-2 mb-3 small border-0" role="alert">
+                            <i class="fas fa-info-circle me-1"></i>Restricted to admin accounts.
+                            Regular users: <a asp-controller="Account" asp-action="Login">standard login</a>.
+                        </div>
+
+                        <form method="post" asp-controller="Account" asp-action="AdminLogin">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger small" role="alert"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label fw-semibold small">Admin Email</label>
+                                <input asp-for="Email" class="form-control" placeholder="admin@theweebden.com" autocomplete="username" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-4">
+                                <label asp-for="Password" class="form-label fw-semibold small">Admin Password</label>
+                                <div class="input-group">
+                                    <input asp-for="Password" class="form-control" placeholder="Enter admin password"
+                                           autocomplete="current-password" id="adminPassword" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                            onclick="togglePassword('adminPassword', this)" aria-label="Toggle password visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg fw-semibold">
+                                    <i class="fas fa-shield-halved me-2"></i>Admin Sign In
+                                </button>
+                            </div>
+
+                            <div class="text-center">
+                                <a asp-controller="Account" asp-action="Login" class="text-muted text-decoration-none small">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to regular login
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+<script>
+    function togglePassword(inputId, btn) {
+        var input = document.getElementById(inputId);
+        var icon = btn.querySelector('i');
+        if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+        else { input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+    }
+</script>
+}

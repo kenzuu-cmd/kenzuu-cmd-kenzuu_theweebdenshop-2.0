@@ -1,0 +1,124 @@
+@model TheWeebDenShop.Models.MangaFormModel
+@{
+    ViewData["Title"] = "Edit Manga";
+}
+
+<main class="main-content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+                <div class="mb-3">
+                    <a asp-controller="Store" asp-action="Dashboard" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="card-header text-white py-3 border-0" style="background: var(--color-primary);">
+                        <h3 class="mb-0 fw-bold"><i class="fas fa-edit me-2"></i>Edit Manga</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" asp-controller="Store" asp-action="EditManga" asp-route-id="@Model.Id" enctype="multipart/form-data">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="ExistingImagePath" />
+
+                            <!-- Title -->
+                            <div class="mb-3">
+                                <label asp-for="Title" class="form-label fw-semibold">Manga Title *</label>
+                                <input asp-for="Title" class="form-control form-control-lg" />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Author -->
+                            <div class="mb-3">
+                                <label asp-for="Author" class="form-label fw-semibold">Author *</label>
+                                <input asp-for="Author" class="form-control" />
+                                <span asp-validation-for="Author" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Genre and Volumes -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Genre" class="form-label fw-semibold">Genre *</label>
+                                    <select asp-for="Genre" class="form-select">
+                                        <option value="">Select Genre</option>
+                                        <option value="Action">Action</option>
+                                        <option value="Adventure">Adventure</option>
+                                        <option value="Comedy">Comedy</option>
+                                        <option value="Drama">Drama</option>
+                                        <option value="Fantasy">Fantasy</option>
+                                        <option value="Horror">Horror</option>
+                                        <option value="Mystery">Mystery</option>
+                                        <option value="Romance">Romance</option>
+                                        <option value="Sci-Fi">Sci-Fi</option>
+                                        <option value="Slice of Life">Slice of Life</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Thriller">Thriller</option>
+                                    </select>
+                                    <span asp-validation-for="Genre" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Volumes" class="form-label fw-semibold">Volumes</label>
+                                    <input asp-for="Volumes" class="form-control" type="number" min="1" max="1000" />
+                                    <span asp-validation-for="Volumes" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Price and Stock -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Price" class="form-label fw-semibold">Price (₱) *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₱</span>
+                                        <input asp-for="Price" class="form-control" type="number" 
+                                               step="0.01" min="0.01" />
+                                    </div>
+                                    <span asp-validation-for="Price" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Stock" class="form-label fw-semibold">Stock *</label>
+                                    <input asp-for="Stock" class="form-control" type="number" min="0" max="99999" />
+                                    <span asp-validation-for="Stock" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Current cover / new upload -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Cover Image</label>
+                                @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+                                {
+                                    var existingImageSrc = ProductHtmlHelpers.ResolveImageUrl(Model.ExistingImagePath);
+
+                                    <div class="mb-2">
+                                        <img src="@existingImageSrc" alt="Current cover" 
+                                             class="rounded shadow-sm" style="max-height: 160px;"
+                                             onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                                        <p class="text-muted small mt-1">Current cover. Upload a new one to replace it.</p>
+                                    </div>
+                                }
+                                <input asp-for="CoverImage" class="form-control" type="file" 
+                                       accept=".jpg,.jpeg,.png,.webp,.gif" />
+                                <small class="text-muted">Leave empty to keep the current image. Max 5 MB.</small>
+                                <span asp-validation-for="CoverImage" class="text-danger small d-block"></span>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>

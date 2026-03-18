@@ -1,0 +1,216 @@
+@model HomeIndexViewModel
+@{
+    ViewData["Title"] = "Your Ultimate Manga Paradise";
+    ViewData["Description"] = "Discover authentic Japanese manga, light novels, and collectibles at The Weeb Den.";
+}
+
+<main class="main-content">
+    <!-- Hero -->
+    <section class="hero" aria-label="Welcome">
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-inner">
+                <div class="carousel-item active"><div class="hero-bg hero-bg-1"></div></div>
+                <div class="carousel-item"><div class="hero-bg hero-bg-2"></div></div>
+                <div class="carousel-item"><div class="hero-bg hero-bg-3"></div></div>
+                <div class="carousel-item"><div class="hero-bg hero-bg-4"></div></div>
+                <div class="carousel-item"><div class="hero-bg hero-bg-5"></div></div>
+                <div class="carousel-item"><div class="hero-bg hero-bg-6"></div></div>
+            </div>
+        </div>
+
+        <div class="hero-overlay"></div>
+        <div class="container hero-container">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="hero-content">
+                        <span class="hero-badge mb-3">
+                            <i class="fas fa-star me-2"></i>Premium Manga Collection
+                        </span>
+                        <h1 class="hero-title mb-4">
+                            <span class="text-jp">ようこそ</span> The Weeb Den
+                        </h1>
+                        <p class="hero-subtitle mb-4">
+                            Your ultimate otaku paradise for authentic Japanese manga,
+                            light novels, and collectibles. Discover rare editions,
+                            complete series, and exclusive imports from the heart of Japan.
+                        </p>
+                        <div class="hero-buttons d-flex flex-wrap gap-3">
+                            <a asp-controller="Products" asp-action="Index" class="btn btn-hero-primary btn-lg">
+                                <i class="fas fa-book me-2"></i>Shop Now
+                            </a>
+                            <a asp-controller="Home" asp-action="About" class="btn btn-hero-secondary btn-lg">
+                                Learn More
+                            </a>
+                        </div>
+                        <div class="hero-stats row mt-5 g-4">
+                            <div class="col-4">
+                                <div class="stat-item text-white">
+                                    <h3 class="fw-bold mb-0">500+</h3>
+                                    <small class="text-white-50">Products</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item text-white">
+                                    <h3 class="fw-bold mb-0">5K+</h3>
+                                    <small class="text-white-50">Happy Customers</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item text-white">
+                                    <h3 class="fw-bold mb-0">4.9<i class="fas fa-star ms-1" style="font-size:.7em;color:#fbbf24;"></i></h3>
+                                    <small class="text-white-50">Rating</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="position-absolute bottom-0 start-50 translate-middle-x mb-4">
+            <a href="#featured" class="text-white text-decoration-none" aria-label="Scroll to featured products">
+                <i class="fas fa-chevron-down fa-2x animate-bounce"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="section bg-light" id="featured">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Featured Collection</h2>
+                <p class="lead text-muted mx-auto" style="max-width: 540px;">
+                    Handpicked selections from our premium manga and light novels
+                </p>
+            </div>
+
+            <div id="featuredProducts" class="row g-4 mb-4">
+                @foreach (var product in Model.FeaturedProducts)
+                {
+                    await Html.RenderPartialAsync("_ProductCard", product);
+                }
+            </div>
+
+            <div class="text-center mt-5">
+                <a asp-controller="Products" asp-action="Index" class="btn btn-primary btn-lg">
+                    View All Products<i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Why Choose The Weeb Den?</h2>
+                <p class="lead text-muted mx-auto" style="max-width: 540px;">
+                    We bring you the finest Japanese literature and collectibles
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="card feature-card h-100 text-center border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3"><i class="fas fa-award"></i></div>
+                            <h5 class="card-title fw-bold">Authentic Imports</h5>
+                            <p class="card-text text-muted small">
+                                Direct imports from Japan ensuring genuine, high-quality manga and light novels.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card feature-card h-100 text-center border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3"><i class="fas fa-gem"></i></div>
+                            <h5 class="card-title fw-bold">Rare Collections</h5>
+                            <p class="card-text text-muted small">
+                                Exclusive access to limited editions, first prints, and hard-to-find series.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card feature-card h-100 text-center border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3"><i class="fas fa-shipping-fast"></i></div>
+                            <h5 class="card-title fw-bold">Fast Delivery</h5>
+                            <p class="card-text text-muted small">
+                                Quick and secure shipping with careful packaging so items arrive perfectly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card feature-card h-100 text-center border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3"><i class="fas fa-headset"></i></div>
+                            <h5 class="card-title fw-bold">24/7 Support</h5>
+                            <p class="card-text text-muted small">
+                                Dedicated customer support team ready to assist with any questions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section bg-gradient-accent text-white">
+        <div class="container">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="display-5 fw-bold mb-3 text-white">Ready to Start Your Collection?</h2>
+                <p class="lead mb-4 text-white opacity-75">
+                    Join thousands of fellow otaku who trust The Weeb Den for their manga needs.
+                </p>
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-light btn-lg">
+                        <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+                    </a>
+                    <a asp-controller="Home" asp-action="Contact" class="btn btn-outline-light btn-lg">
+                        Have Questions?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="section bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center">
+                    <i class="fas fa-envelope-open-text fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold mb-3">Stay Updated</h3>
+                    <p class="text-muted mb-4">Subscribe for exclusive deals and new arrivals.</p>
+
+                    @if (!string.IsNullOrEmpty(Model.NewsletterMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>@Model.NewsletterMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form method="post" asp-controller="Home" asp-action="Newsletter" class="row g-2">
+                        <div class="col-md-8">
+                            <input type="email" class="form-control form-control-lg"
+                                   placeholder="Enter your email" name="email" required
+                                   aria-label="Email address" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-paper-plane me-1"></i>Subscribe
+                            </button>
+                        </div>
+                    </form>
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-lock me-1"></i>We respect your privacy
+                    </small>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>

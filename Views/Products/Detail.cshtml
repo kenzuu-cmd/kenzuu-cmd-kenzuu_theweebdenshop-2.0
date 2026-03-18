@@ -1,0 +1,166 @@
+@model TheWeebDenShop.ViewModels.ProductDetailViewModel
+@{
+    ViewData["Title"] = Model.Product?.Name ?? "Product Details";
+}
+
+<main class="main-content">
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home" asp-action="Index"><i class="fas fa-home me-1"></i>Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="Products" asp-action="Index">Products</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    @(Model.Product?.Name ?? "Product Details")
+                </li>
+            </ol>
+        </nav>
+
+        @if (Model.Product == null)
+        {
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>Product not found
+            </div>
+        }
+        else
+        {
+            var product = Model.Product;
+            var stockBadgeClass = ProductHtmlHelpers.GetStockBadgeClass(product.Stock);
+            var stockText = ProductHtmlHelpers.GetStockText(product.Stock);
+
+            <div id="productDetail">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <div class="product-detail-image">
+                            @{
+                                var mainImgSrc = ProductHtmlHelpers.ResolveImageUrl(product.Image);
+                            }
+                            <img src="@mainImgSrc"
+                                 class="img-fluid rounded shadow" alt="@product.Name" loading="lazy"
+                                 onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="product-detail-info">
+                            <div class="mb-3">
+                                <h1 class="product-detail-title mb-2">@product.Name</h1>
+                                <p class="product-detail-author mb-3">
+                                    <i class="fas fa-pen-fancy me-2"></i>by <strong>@product.Author</strong>
+                                </p>
+                            </div>
+                            <div class="product-rating mb-4">
+                                <span class="rating-stars">@ProductHtmlHelpers.GenerateStars(Html, product.Rating)</span>
+                                <span class="rating-text ms-2">@product.Rating out of 5</span>
+                            </div>
+                            <div class="product-price-section mb-4">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <div>
+                                        <h2 class="product-price mb-0">@ProductHtmlHelpers.FormatPrice(product.Price)</h2>
+                                        <small class="text-muted">Free shipping on orders over ₱2,500</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge @stockBadgeClass fs-6">
+                                            <i class="fas fa-box me-1"></i>@stockText
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="product-description mb-4">
+                                <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Description</h5>
+                                <p class="text-muted">@product.Description</p>
+                            </div>
+                            <div class="product-meta-info mb-4">
+                                <h5 class="mb-3"><i class="fas fa-list-ul me-2"></i>Product Details</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="detail-item">
+                                            <i class="fas fa-tag text-primary me-2"></i><strong>Genre:</strong>
+                                            <span class="badge bg-primary ms-2">@product.Genre</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-item">
+                                            <i class="fas fa-book text-primary me-2"></i><strong>Volumes:</strong>
+                                            <span class="ms-2">@product.Volumes</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="product-actions d-flex gap-2 flex-wrap">
+                                @if (product.Stock > 0)
+                                {
+                                    <form method="post" asp-controller="Products" asp-action="AddToCart" class="d-inline">
+                                        <input type="hidden" name="productId" value="@product.Id" />
+                                        <input type="hidden" name="returnUrl" value="@Url.Action("Detail", "Products", new { id = product.Id })" />
+                                        <button type="submit" class="btn btn-primary flex-grow-1">
+                                            <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary flex-grow-1" disabled>
+                                        <i class="fas fa-ban me-2"></i>Out of Stock
+                                    </button>
+                                }
+                                <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="fas fa-shopping-cart me-2"></i>View Cart
+                                </a>
+                                <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Products
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Related products section *@
+            @if (Model.RelatedProducts.Any())
+            {
+                <div class="related-products-section mt-5 pt-4 border-top">
+                    <h3 class="mb-4"><i class="fas fa-book-open me-2"></i>Related Products</h3>
+                    <div class="row g-4">
+                        @foreach (var related in Model.RelatedProducts)
+                        {
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card product-card h-100 shadow-sm">
+                                    <div class="position-relative overflow-hidden">
+                                        @{
+                                            var relImgSrc = ProductHtmlHelpers.ResolveImageUrl(related.Image);
+                                        }
+                                        <img src="@relImgSrc"
+                                             class="card-img-top" alt="@related.Name" loading="lazy"
+                                             onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title text-truncate">@related.Name</h5>
+                                        <p class="author-info mb-2 small">
+                                            <i class="fas fa-user-edit me-1"></i>@related.Author
+                                        </p>
+                                        <div class="rating mb-2">
+                                            @ProductHtmlHelpers.GenerateStars(Html, related.Rating)
+                                        </div>
+                                        <div class="price-section mb-3">
+                                            <span class="price">@ProductHtmlHelpers.FormatPrice(related.Price)</span>
+                                        </div>
+                                        <a asp-controller="Products" asp-action="Detail" asp-route-id="@related.Id"
+                                           class="btn btn-sm btn-primary mt-auto">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</main>
+
+@if (!string.IsNullOrEmpty(Model.CartMessage))
+{
+    <script>document.addEventListener('DOMContentLoaded',function(){showNotification('@Html.Raw(Model.CartMessage.Replace("'","\\'"))','success')});</script>
+}

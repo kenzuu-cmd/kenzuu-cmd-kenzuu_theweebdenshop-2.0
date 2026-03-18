@@ -1,0 +1,166 @@
+@model TheWeebDenShop.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<main class="main-content">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-2">
+                <i class="fas fa-lock me-2 text-muted"></i>Secure Checkout
+            </h1>
+            <p class="text-muted">Complete your order for authentic manga and collectibles.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-7">
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                    </div>
+                }
+
+                <div class="card checkout-section border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white py-3 border-0">
+                        <h5 class="mb-0 fw-semibold"><i class="fas fa-truck me-2"></i>Order Information</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" asp-controller="Checkout" asp-action="Index">
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                            <h6 class="fw-bold text-muted text-uppercase small mb-3">Shipping Address</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label asp-for="CheckoutForm.FirstName" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.FirstName" class="form-control" placeholder="First name" />
+                                    <span asp-validation-for="CheckoutForm.FirstName" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="CheckoutForm.LastName" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.LastName" class="form-control" placeholder="Last name" />
+                                    <span asp-validation-for="CheckoutForm.LastName" class="text-danger small"></span>
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="CheckoutForm.Email" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.Email" class="form-control" placeholder="your.email@example.com" />
+                                    <span asp-validation-for="CheckoutForm.Email" class="text-danger small"></span>
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="CheckoutForm.Address" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.Address" class="form-control" placeholder="Street address" />
+                                    <span asp-validation-for="CheckoutForm.Address" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="CheckoutForm.City" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.City" class="form-control" placeholder="City" />
+                                    <span asp-validation-for="CheckoutForm.City" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="CheckoutForm.State" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.State" class="form-control" placeholder="State" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="CheckoutForm.ZipCode" class="form-label"></label>
+                                    <input asp-for="CheckoutForm.ZipCode" class="form-control" placeholder="ZIP" />
+                                    <span asp-validation-for="CheckoutForm.ZipCode" class="text-danger small"></span>
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="CheckoutForm.Country" class="form-label"></label>
+                                    <select asp-for="CheckoutForm.Country" class="form-select">
+                                        <option value="">Select Country</option>
+                                        <option value="PH" selected>Philippines</option>
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="UK">United Kingdom</option>
+                                        <option value="JP">Japan</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="SG">Singapore</option>
+                                        <option value="MY">Malaysia</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <span asp-validation-for="CheckoutForm.Country" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <hr class="my-4" />
+
+                            <h6 class="fw-bold text-muted text-uppercase small mb-3">Payment Method</h6>
+                            <div class="alert alert-info border-0 small mb-3">
+                                <i class="fas fa-info-circle me-1"></i><strong>Demo Mode</strong> — No real payments are processed.
+                            </div>
+
+                            <div class="d-flex flex-column gap-2 mb-4">
+                                @{
+                                    var paymentOptions = new[] {
+                                        ("GCash", "gcash", "fas fa-mobile-alt", "GCash (Philippines)", "Fast mobile wallet payment"),
+                                        ("PayPal", "paypal", "fab fa-paypal", "PayPal", "Pay with your PayPal account"),
+                                        ("CreditCard", "creditCard", "fas fa-credit-card", "Credit / Debit Card", "Visa, Mastercard, Amex"),
+                                        ("BankTransfer", "bankTransfer", "fas fa-university", "Bank Transfer", "Instructions sent via email"),
+                                        ("COD", "cod", "fas fa-money-bill-wave", "Cash on Delivery", "Pay when you receive your order"),
+                                    };
+                                }
+                                @foreach (var (val, id, icon, label, desc) in paymentOptions)
+                                {
+                                    <label class="form-check p-3 border rounded-3 d-flex align-items-start gap-3 cursor-pointer" for="@id">
+                                        <input class="form-check-input mt-1" type="radio" asp-for="CheckoutForm.PaymentMethod" value="@val" id="@id" />
+                                        <div>
+                                            <span class="fw-semibold"><i class="@icon me-2 text-primary"></i>@label</span>
+                                            <small class="d-block text-muted mt-1">@desc</small>
+                                        </div>
+                                    </label>
+                                }
+                            </div>
+
+                            <div class="d-grid">
+                                <button class="btn btn-success btn-lg" type="submit">
+                                    <i class="fas fa-check-circle me-2"></i>Complete Order
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm sticky-summary">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h5 class="mb-0 fw-semibold"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var item in Model.CartItems)
+                        {
+                            var checkoutImageSrc = ProductHtmlHelpers.ResolveImageUrl(item.Image);
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@checkoutImageSrc" alt="@item.Name"
+                                         class="rounded" style="width: 52px; height: 72px; object-fit: cover;" loading="lazy"
+                                         onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                                    <div>
+                                        <h6 class="mb-0 small fw-semibold">@item.Name</h6>
+                                        <small class="text-muted">Qty: @item.Quantity &times; @ProductHtmlHelpers.FormatPrice(item.Price)</small>
+                                    </div>
+                                </div>
+                                <strong class="text-nowrap">@ProductHtmlHelpers.FormatPrice(item.Subtotal)</strong>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal</span>
+                            <strong>@ProductHtmlHelpers.FormatPrice(Model.Subtotal)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tax (8%)</span>
+                            <strong>@ProductHtmlHelpers.FormatPrice(Model.Tax)</strong>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between">
+                            <span class="h5 mb-0">Total</span>
+                            <strong class="h5 mb-0 text-primary">@ProductHtmlHelpers.FormatPrice(Model.Total)</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>

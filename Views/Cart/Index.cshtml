@@ -1,0 +1,123 @@
+@model TheWeebDenShop.ViewModels.CartViewModel
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<main class="main-content">
+    <section class="py-5">
+        <div class="container">
+            <h2 class="fw-bold mb-4"><i class="fas fa-shopping-bag me-2"></i>Shopping Cart</h2>
+
+            @if (!Model.CartItems.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <h3 class="empty-state-title">Your cart is empty</h3>
+                    <p class="empty-state-description">
+                        Explore our collection and find your next favorite read!
+                    </p>
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary btn-lg px-5">
+                        <i class="fas fa-book me-2"></i>Browse Products
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        @foreach (var item in Model.CartItems)
+                        {
+                            var cartImageSrc = ProductHtmlHelpers.ResolveImageUrl(item.Image);
+                            <div class="cart-item mb-3">
+                                <div class="row g-0 align-items-center">
+                                    <div class="col-lg-2 col-md-3 col-3">
+                                        <div class="position-relative" style="padding-top: 130%;">
+                                            <img src="@cartImageSrc"
+                                                 class="position-absolute top-0 start-0 w-100 h-100 rounded-start"
+                                                 style="object-fit: cover;" alt="@item.Name" loading="lazy"
+                                                 onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-10 col-md-9 col-9">
+                                        <div class="p-3 p-md-4">
+                                            <div class="row g-3 align-items-center">
+                                                <div class="col-lg-4 col-md-12">
+                                                    <h5 class="mb-2 fw-bold text-truncate">@item.Name</h5>
+                                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                            @ProductHtmlHelpers.FormatPrice(item.Price) each
+                                                        </span>
+                                                        <small class="text-muted"><i class="fas fa-box me-1"></i>@item.Stock in stock</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3 col-md-5 col-12">
+                                                    <label class="form-label small text-muted mb-1">Quantity</label>
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <form method="post" asp-controller="Cart" asp-action="UpdateQuantity">
+                                                            <input type="hidden" name="productId" value="@item.Id" />
+                                                            <input type="hidden" name="change" value="-1" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary qty-btn"><i class="fas fa-minus"></i></button>
+                                                        </form>
+                                                        <input type="text" class="form-control form-control-sm text-center fw-bold" value="@item.Quantity" readonly style="max-width: 48px;" />
+                                                        <form method="post" asp-controller="Cart" asp-action="UpdateQuantity">
+                                                            <input type="hidden" name="productId" value="@item.Id" />
+                                                            <input type="hidden" name="change" value="1" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary qty-btn"><i class="fas fa-plus"></i></button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3 col-md-4 col-7">
+                                                    <label class="form-label small text-muted mb-1">Subtotal</label>
+                                                    <h5 class="mb-0 text-primary fw-bold">@ProductHtmlHelpers.FormatPrice(item.Subtotal)</h5>
+                                                </div>
+                                                <div class="col-lg-2 col-md-3 col-5 text-end">
+                                                    <form method="post" asp-controller="Cart" asp-action="RemoveItem">
+                                                        <input type="hidden" name="productId" value="@item.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove item">
+                                                            <i class="fas fa-trash-alt me-1"></i><span class="d-none d-md-inline">Remove</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="cart-summary-card card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-3">Order Summary</h5>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal</span>
+                                    <strong>@ProductHtmlHelpers.FormatPrice(Model.Subtotal)</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Tax (8%)</span>
+                                    <strong>@ProductHtmlHelpers.FormatPrice(Model.Tax)</strong>
+                                </div>
+                                <hr />
+                                <div class="d-flex justify-content-between mb-4">
+                                    <span class="h5 mb-0">Total</span>
+                                    <strong class="h5 mb-0 text-primary">@ProductHtmlHelpers.FormatPrice(Model.Total)</strong>
+                                </div>
+                                <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                                </a>
+                                <form method="post" asp-controller="Cart" asp-action="ClearCart">
+                                    <button type="submit" class="btn btn-outline-danger w-100 btn-sm"
+                                            onclick="return confirm('Clear all items from your cart?');">
+                                        <i class="fas fa-trash me-2"></i>Clear Cart
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</main>

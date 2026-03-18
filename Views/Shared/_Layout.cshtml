@@ -1,0 +1,204 @@
+@inject TheWeebDenShop.Services.ICartService CartService
+@inject Microsoft.AspNetCore.Identity.SignInManager<TheWeebDenShop.Models.User> SignInManager
+@inject Microsoft.AspNetCore.Identity.UserManager<TheWeebDenShop.Models.User> UserManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — The Weeb Den</title>
+    <meta name="description" content="@(ViewData["Description"] ?? "Discover authentic Japanese manga, light novels, and collectibles at The Weeb Den.")" />
+    <meta name="keywords" content="manga, anime, light novels, Japanese books, otaku, collectibles" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <!-- Design System -->
+    <link rel="stylesheet" href="~/css/common.css" />
+    <link rel="stylesheet" href="~/css/theme.css" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="~/images/weebdenfavicon.ico" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" role="navigation">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <img src="~/images/weebden-logo.png" alt="The Weeb Den" height="36" class="rounded" />
+                <span>The Weeb Den</span>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Products" asp-action="Index">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="About">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Contact">Contact</a>
+                    </li>
+
+                    <!-- Cart -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" asp-controller="Cart" asp-action="Index" aria-label="Shopping cart">
+                            <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+                            <span class="d-lg-none ms-2">Cart</span>
+                            @{ var cartCount = CartService.GetItemCount(); }
+                            @if (cartCount > 0)
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      style="font-size: 0.65rem; min-width: 18px;"
+                                      id="cart-badge" aria-label="@cartCount items in cart">@cartCount</span>
+                            }
+                        </a>
+                    </li>
+
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        var currentUser = await UserManager.GetUserAsync(User);
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i>
+                                <span>@(currentUser?.FullName ?? User.Identity?.Name)</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                            <i class="fas fa-shield-halved me-2 text-warning"></i>Admin Dashboard
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                }
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Store" asp-action="Dashboard">
+                                        <i class="fas fa-store me-2" style="color: var(--color-info);"></i>My Store
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form method="post" asp-controller="Account" asp-action="Logout">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-arrow-right-from-bracket me-2"></i>Sign Out
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Account" asp-action="Login">Sign In</a>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-sm btn-secondary" asp-controller="Account" asp-action="Register"
+                               style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 6px;">
+                                Get Started
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    @RenderBody()
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <img src="~/images/weebden-logo.png" alt="The Weeb Den" height="36" class="footer-logo flex-shrink-0 rounded" style="width: auto;" />
+                        <strong style="color: white; font-size: 1rem;">The Weeb Den</strong>
+                    </div>
+                    <p style="font-size: 0.875rem; line-height: 1.7; margin-bottom: 1rem; color: rgba(255, 255, 255, 0.75);">
+                        Your trusted source for authentic Japanese manga, light novels, and collectibles since 2025.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 col-6">
+                    <h5>Shop</h5>
+                    <ul class="list-unstyled">
+                        <li><a asp-controller="Products" asp-action="Index">All Products</a></li>
+                        <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 col-6">
+                    <h5>Company</h5>
+                    <ul class="list-unstyled">
+                        <li><a asp-controller="Home" asp-action="About">About Us</a></li>
+                        <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled">
+                        <li><a asp-controller="Home" asp-action="Privacy"><i class="fas fa-shield-halved me-1"></i>Privacy Policy</a></li>
+                        <li><a asp-controller="Home" asp-action="Terms"><i class="fas fa-file-lines me-1"></i>Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 0 0 1.5rem;" />
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <small style="color: rgba(255,255,255,0.7);">
+                    &copy; @DateTime.Now.Year The Weeb Den. All rights reserved.
+                </small>
+                <div class="d-flex align-items-center gap-3">
+                    <small style="color: rgba(255,255,255,0.65);">
+                        <i class="fas fa-lock me-1"></i>Secure Shopping
+                    </small>
+                    <small style="color: rgba(255,255,255,0.65);">
+                        <i class="fas fa-truck me-1"></i>Worldwide Shipping
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div id="tempdata-message" data-message="@message" data-type="success" style="display:none;"></div>
+    }
+    @if (TempData["SuccessMessage"] is string successMsg)
+    {
+        <div id="tempdata-message" data-message="@successMsg" data-type="success" style="display:none;"></div>
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

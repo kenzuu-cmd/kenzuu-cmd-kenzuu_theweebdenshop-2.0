@@ -1,0 +1,27 @@
+@model TheWeebDenShop.Models.User
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<div class="container py-4">
+    <h1 class="h3 mb-3">User Details</h1>
+
+    <dl class="row card card-body">
+        <dt class="col-sm-3">Full Name</dt>
+        <dd class="col-sm-9">@Model.FullName</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Email Confirmed</dt>
+        <dd class="col-sm-9">@(Model.EmailConfirmed ? "Yes" : "No")</dd>
+
+        <dt class="col-sm-3">Created</dt>
+        <dd class="col-sm-9">@Model.CreatedAt.ToString("u")</dd>
+    </dl>
+
+    <div class="d-flex gap-2 mt-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>

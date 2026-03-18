@@ -1,0 +1,93 @@
+@model TheWeebDenShop.ViewModels.ProductsViewModel
+@{
+    ViewData["Title"] = "Products";
+    ViewData["Description"] = "Browse our curated selection of authentic Japanese manga, light novels, and collectibles.";
+}
+
+<main class="main-content">
+    <!-- Header -->
+    <section class="products-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-3">Manga Collection</h1>
+                    <p class="lead text-muted">
+                        Discover our curated selection of authentic Japanese manga, light novels, and collectibles.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="py-3 bg-white shadow-sm sticky-filter">
+        <div class="container">
+            <form method="get" asp-controller="Products" asp-action="Index" class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="search" value="@Model.SearchTerm"
+                               class="form-control border-start-0 ps-0"
+                               placeholder="Search titles or authors..." aria-label="Search manga" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="genre" class="form-select" aria-label="Filter by genre">
+                        <option value="">All Genres</option>
+                        @foreach (var genre in Model.Genres)
+                        {
+                            <option value="@genre" selected="@(Model.SelectedGenre == genre)">@genre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="price" class="form-select" aria-label="Filter by price">
+                        <option value="">All Prices</option>
+                        <option value="0-999" selected="@(Model.SelectedPrice == "0-999")">Under ₱999</option>
+                        <option value="1000-2999" selected="@(Model.SelectedPrice == "1000-2999")">₱1,000 – ₱2,999</option>
+                        <option value="3000-5999" selected="@(Model.SelectedPrice == "3000-5999")">₱3,000 – ₱5,999</option>
+                        <option value="6000-99999" selected="@(Model.SelectedPrice == "6000-99999")">₱6,000+</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-center gap-2 justify-content-end">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                    <small class="text-muted text-nowrap">@Model.FilteredProducts.Count items</small>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Grid -->
+    <section class="py-4">
+        <div class="container">
+            <div class="row" id="allProducts">
+                @if (Model.FilteredProducts.Count == 0)
+                {
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No products found</h5>
+                            <p class="text-muted small">Try adjusting your search or filters.</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var product in Model.FilteredProducts)
+                    {
+                        await Html.RenderPartialAsync("_ProductCard", product);
+                    }
+                }
+            </div>
+        </div>
+    </section>
+</main>
+
+@if (!string.IsNullOrEmpty(Model.CartMessage))
+{
+    <script>document.addEventListener('DOMContentLoaded',function(){showNotification('@Html.Raw(Model.CartMessage.Replace("'","\\'"))','success')});</script>
+}
