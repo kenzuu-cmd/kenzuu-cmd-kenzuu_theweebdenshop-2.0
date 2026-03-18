@@ -1,6 +1,8 @@
 @inject TheWeebDenShop.Services.ICartService CartService
 @inject Microsoft.AspNetCore.Identity.SignInManager<TheWeebDenShop.Models.User> SignInManager
 @inject Microsoft.AspNetCore.Identity.UserManager<TheWeebDenShop.Models.User> UserManager
+@inject TheWeebDenShop.Data.ApplicationDbContext DbContext
+@using Microsoft.EntityFrameworkCore
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,11 +79,31 @@
                     @if (SignInManager.IsSignedIn(User))
                     {
                         var currentUser = await UserManager.GetUserAsync(User);
+                        var currentUserId = UserManager.GetUserId(User);
+                        string? myStoreName = null;
+                        if (int.TryParse(currentUserId, out var ownerId))
+                        {
+                            // Query latest store name directly from DB to avoid stale UI after delete/recreate.
+                            myStoreName = await DbContext.Stores
+                                .AsNoTracking()
+                                .Where(s => s.OwnerId == ownerId)
+                                .OrderByDescending(s => s.CreatedAt)
+                                .Select(s => s.Name)
+                                .FirstOrDefaultAsync();
+                        }
+
+                        // Bug fix note for teachers:
+                        // If no store exists, do NOT show any previous store/profile display name here.
+                        // Show generic account identity (email/username) so deleted store names cannot persist in UI.
+                        var navProfileLabel = string.IsNullOrWhiteSpace(myStoreName)
+                            ? (currentUser?.Email ?? User.Identity?.Name ?? "Account")
+                            : myStoreName;
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user-circle me-1"></i>
-                                <span>@(currentUser?.FullName ?? User.Identity?.Name)</span>
+                                <span>@navProfileLabel</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 @if (User.IsInRole("Admin"))
@@ -95,7 +117,8 @@
                                 }
                                 <li>
                                     <a class="dropdown-item" asp-controller="Store" asp-action="Dashboard">
-                                        <i class="fas fa-store me-2" style="color: var(--color-info);"></i>My Store
+                                        <i class="fas fa-store me-2" style="color: var(--color-info);"></i>
+                                        @(string.IsNullOrWhiteSpace(myStoreName) ? "Create Store" : "My Store Dashboard")
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider" /></li>

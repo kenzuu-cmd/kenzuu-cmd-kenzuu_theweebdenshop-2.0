@@ -15,14 +15,17 @@ public class StoreController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<User> _userManager;
     private readonly IImageUploadService _imageService;
+    private readonly ILogger<StoreController> _logger;
 
     public StoreController(ApplicationDbContext db,
                            UserManager<User> userManager,
-                           IImageUploadService imageService)
+                           IImageUploadService imageService,
+                           ILogger<StoreController> logger)
     {
         _db = db;
         _userManager = userManager;
         _imageService = imageService;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -32,8 +35,12 @@ public class StoreController : Controller
         {
             return Challenge();
         }
+
+        // Read fresh data every request so deleted/recreated store names show immediately.
         var store = await _db.Stores
+            .AsNoTracking()
             .Include(s => s.Products)
+            .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync(s => s.OwnerId == ownerId);
 
         var vm = new StoreDashboardViewModel
@@ -53,7 +60,9 @@ public class StoreController : Controller
         {
             return Challenge();
         }
-        var existing = await _db.Stores.AnyAsync(s => s.OwnerId == ownerId);
+
+        // AsNoTracking avoids any stale tracked entity checks during create.
+        var existing = await _db.Stores.AsNoTracking().AnyAsync(s => s.OwnerId == ownerId);
         if (existing)
         {
             TempData["ErrorMessage"] = "You already have a store.";
@@ -120,6 +129,75 @@ public class StoreController : Controller
 
         TempData["SuccessMessage"] = $"'{manga.Name}' has been deleted.";
         return RedirectToAction("Dashboard");
+    }
+
+    /// <summary>
+    /// Deletes the current user's store and all store-owned data.
+    /// Teacher note: Main logic for "Delete Store" is here.
+    /// Debug tip: If delete fails or old name still appears, check logs for ownerId,
+    /// ensure all owner stores were removed, and confirm Dashboard uses AsNoTracking.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteStore()
+    {
+        var userId = _userManager.GetUserId(User);
+        if (!int.TryParse(userId, out var ownerId))
+        {
+            return Challenge();
+        }
+
+        var stores = await _db.Stores
+            .Include(s => s.Products)
+            .Where(s => s.OwnerId == ownerId)
+            .ToListAsync();
+
+        if (stores.Count == 0)
+        {
+            TempData["ErrorMessage"] = "No store found to delete.";
+            return RedirectToAction("Dashboard");
+        }
+
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
+        try
+        {
+            // Safety cleanup: remove every store row for this owner so old profile names cannot linger.
+            var allListings = stores.SelectMany(s => s.Products).ToList();
+
+            foreach (var listing in allListings)
+            {
+                _imageService.DeleteImage(listing.Image);
+            }
+
+            foreach (var ownerStore in stores)
+            {
+                _imageService.DeleteImage(ownerStore.LogoPath);
+                _imageService.DeleteImage(ownerStore.BannerPath);
+            }
+
+            _db.Products.RemoveRange(allListings);
+            _db.Stores.RemoveRange(stores);
+            await _db.SaveChangesAsync();
+
+            // Defensive cleanup: clear possible stale store/profile references after delete.
+            HttpContext.Session.Remove("CurrentStoreId");
+            HttpContext.Session.Remove("CurrentStoreName");
+            HttpContext.Session.Remove("StoreProfileName");
+            _db.ChangeTracker.Clear();
+
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] = "Your store and listings were deleted. You can create a new store anytime.";
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to delete store for owner {OwnerId}", ownerId);
+            TempData["ErrorMessage"] = "Delete failed. Please try again. If it keeps failing, contact support.";
+            return RedirectToAction("Dashboard");
+        }
     }
 
     // ── Add Manga ──

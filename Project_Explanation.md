@@ -1,6 +1,6 @@
 # Project Explanation
 
-This document explains the project in clear, beginner-friendly language while still using correct ASP.NET Core MVC terms.
+kapoya ani oy
 
 ## 1. What This Project Is
 
